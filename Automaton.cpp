@@ -1,5 +1,4 @@
 #include "Automaton.h"
-#include "Utilities.h"
 #include "Utilities/Unicode.h"
 #include "Utilities/JSON.h"
 #include <unordered_map>
@@ -326,7 +325,7 @@ namespace Automata {
     NFA fromRegex(Regex::Regex regex, const Languages::Alphabet& alphabet) {
         /* Confirm compatibility.*/
         if (!Languages::isSubsetOf(Regex::coreAlphabetOf(regex), alphabet)) {
-            Utilities::error("Regular expression has wrong alphabet.");
+            throw runtime_error("Regular expression has wrong alphabet.");
         }
 
         /* Desugar the regex to make it a "pure" regex. */
@@ -365,7 +364,7 @@ namespace Automata {
             }
 
             ThompsonPair handle(Regex::Sigma *) override {
-                Utilities::error("Impossible.");
+                abort(); // Logic error!
             }
 
             ThompsonPair handle(Regex::Epsilon *) override {
@@ -440,15 +439,15 @@ namespace Automata {
             }
 
             ThompsonPair handle(Regex::Plus *, ThompsonPair) override {
-                Utilities::error("Impossible.");
+                abort(); // Logic error!
             }
 
             ThompsonPair handle(Regex::Question *, ThompsonPair) override {
-                Utilities::error("Impossible.");
+                abort(); // Logic error!
             }
 
             ThompsonPair handle(Regex::Power *, ThompsonPair) override {
-                Utilities::error("Impossible.");
+                abort(); // Logic error!
             }
         };
 
@@ -487,7 +486,7 @@ namespace Automata {
             /* Read the next character. */
             char32_t ch = readChar(input);
             if (!automaton.alphabet.count(ch)) {
-                Utilities::error("Character not in alphabet: " + toUTF8(ch));
+                throw runtime_error("Character not in alphabet: " + toUTF8(ch));
             }
 
             /* Follow all transitions labeled with this character, taking their
@@ -682,7 +681,7 @@ namespace Automata {
     DFA xorConstruct(const DFA& one, const DFA& two) {
         /* Alphabets must match; if not, we're in trouble. */
         if (one.alphabet != two.alphabet) {
-            Utilities::error("Alphabet mismatch in XOR construction.");
+            throw runtime_error("Alphabet mismatch in XOR construction.");
         }
 
         DFA result;
@@ -716,10 +715,10 @@ namespace Automata {
                 auto r2 = curr.second->transitions.lower_bound(ch);
 
                 if (r1 == curr.first->transitions.end() || r1->first != ch) {
-                    Utilities::error("Internal error: Missing transition?");
+                    abort(); // Logic error!
                 }
                 if (r2 == curr.second->transitions.end() || r2->first != ch) {
-                    Utilities::error("Internal error: Missing transition?");
+                    abort(); // Logic error!
                 }
 
                 /* Here's where we need to go. Have we seen it before? */

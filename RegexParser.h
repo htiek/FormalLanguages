@@ -8,7 +8,9 @@
 #include "Utilities/Unicode.h"
 
 
-std::shared_ptr<Regex::ASTNode> parseRegex(std::queue<Regex::Token>& q);
-std::shared_ptr<Regex::ASTNode> parseRegex(std::queue<Regex::Token>&& q);
+namespace Regex {
+    std::shared_ptr<ASTNode> parse(std::queue<Token>& q);
+    std::shared_ptr<ASTNode> parse(std::queue<Token>&& q);
+}
 
 #endif

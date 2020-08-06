@@ -1,6 +1,6 @@
 #include "CFGScanner.h"
 #include "Utilities/Unicode.h"
-#include "Utilities.h"
+#include "StrUtils/StrUtils.h"
 #include <unordered_map>
 #include <sstream>
 using namespace std;

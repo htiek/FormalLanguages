@@ -1,6 +1,5 @@
 #include "Regex.h"
 #include "RegexScanner.h"
-#include "Utilities.h"
 #include "Utilities/Unicode.h"
 #include <typeinfo>
 #include <sstream>
@@ -11,7 +10,7 @@ using namespace std;
 namespace Regex {
     /* Visitor implementations. */
     void ASTNode::accept(Visitor &) {
-        Utilities::error("Unknown ASTNode type: " + string(typeid(*this).name()));
+        throw runtime_error("Unknown ASTNode type: " + string(typeid(*this).name()));
     }
     void Character::accept(Visitor& v) {
         v.visit(this);

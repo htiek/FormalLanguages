@@ -1,6 +1,6 @@
 #include "RegexScanner.h"
 #include "Utilities/Unicode.h"
-#include "Utilities.h"
+#include "StrUtils/StrUtils.h"
 #include <unordered_map>
 #include <sstream>
 using namespace std;
@@ -73,7 +73,7 @@ namespace Regex {
             size_t value;
 
             if (!(converter >> value) || value > kMaxRepeats) {
-                Utilities::error("Number too large: " + sequence);
+                throw runtime_error("Number too large: " + sequence);
             }
 
             return value;
@@ -122,7 +122,7 @@ namespace Regex {
 
             /* The next character is the one we're looking for. */
             if (input.peek() == EOF) {
-                Utilities::error("Saw escape character at end of input.");
+                throw runtime_error("Saw escape character at end of input.");
             }
 
             result.push({ TokenType::CHARACTER, toUTF8(readChar(input)) });
