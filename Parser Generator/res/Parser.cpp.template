@@ -1,0 +1,237 @@
+#include "%% Parser Name %%Parser.h"
+#include "%% Parser Name %%Scanner.h"
+#include <queue>
+#include <stack>
+#include <vector>
+#include <map>
+#include <functional>
+#include <iostream>
+using namespace std;
+
+#define PARSER_IS_VERBOSE (%% Verbose %%)
+
+namespace %% Parser Name %% {
+    namespace {
+      template <typename T> T popFrom(stack<T>& s) {
+        if (s.empty()) throw runtime_error("Pop from empty stack.");
+        T result = std::move(s.top());
+        s.pop();
+        return result;
+      }
+
+      enum class Nonterminal {
+    %% Nonterminals %%
+      };
+
+      /* Type representing an item that can be on the parsing stack (either a
+       * terminal or a nonterminal).
+       */
+      struct Symbol {
+        bool isToken;
+        union {
+          TokenType   tokenType;
+          Nonterminal nonterminalType;
+        };
+
+        Symbol(TokenType t) {
+          isToken = true;
+          tokenType = t;
+        }
+        Symbol(Nonterminal t) {
+          isToken = false;
+          nonterminalType = t;
+        }
+      };
+
+      bool operator< (const Symbol& lhs, const Symbol& rhs) {
+        if (lhs.isToken != rhs.isToken) return lhs.isToken;
+        if (lhs.isToken) return lhs.tokenType < rhs.tokenType;
+        return lhs.nonterminalType < rhs.nonterminalType;
+      }
+
+      /* Type representing auxiliary data to store in each stack entry. */
+      struct AuxData {
+    %% Aux Entries %%
+      };
+
+      /* Type representing data aggregated so far. */
+      struct StackData {
+        Token     token;  // Only active if the item is a terminal
+        AuxData   data;   // Only active if the item is a nonterminal
+      };
+
+      /* Type representing an item on the stack. */
+      struct StackItem {
+        size_t    state;
+        StackData data;
+      };
+
+      /* Base type for actions. */
+      struct Action {
+        virtual ~Action() = default;
+      };
+
+      struct ShiftAction: Action {
+        size_t target;
+
+        ShiftAction(int target) : target(target) {}
+      };
+
+      struct HaltAction: Action {
+
+      };
+
+      struct ReduceAction: Action {
+        Nonterminal reduceTo;
+
+        /* Does the reduction. */
+        virtual void reduce(stack<StackItem>& s) = 0;
+
+        ReduceAction(Nonterminal t) : reduceTo(t) {}
+      };
+
+      /* Helper template functions that fire off callbacks with the arguments
+       * expanded out into a list.
+       */
+      template <size_t N> struct DoReduction {
+        template <typename Callback, typename... Args>
+        static AuxData invoke(stack<StackItem>& s, Callback c, const Args&... args) {
+          /* Build arguments up in reverse order, since items are coming off of the stack! */
+          auto nextArg = popFrom(s);
+          return DoReduction<N - 1>::invoke(s, c, nextArg.data, args...);
+        }
+      };
+      template <> struct DoReduction<0> {
+        template <typename Callback, typename... Args>
+        static AuxData invoke(stack<StackItem>&, Callback c, const Args&... args) {
+          return c(args...);
+        }
+      };
+
+      /* Utility metafunction that maps from a number N to a callback type that accepts
+       * N arguments.
+       */
+      template <size_t M> struct CallbackType {
+        template <size_t N, typename... Args> struct Helper {
+          using type = typename Helper<N - 1, Args..., StackData>::type;
+        };
+        template <typename... Args> struct Helper<0, Args...> {
+          using type = std::function<AuxData (Args...)>;
+        };
+        using type = typename Helper<M>::type;
+      };
+
+      /* Use template system so we know how many arguments to forward. */
+      template <size_t N> struct ReduceActionN: ReduceAction {
+        typename CallbackType<N>::type callback; // Function to invoke with reduced items
+
+        void reduce(stack<StackItem>& s) override;
+
+        ReduceActionN(Nonterminal n, typename CallbackType<N>::type c) : ReduceAction(n), callback(c) {}
+      };
+
+      /* Unused argument type. */
+      struct _unused_ {};
+
+    %% Reduce Prototypes %%
+
+    %% Reduce Thunks %%
+
+      /* Action table. */
+      const vector<map<Symbol, Action*>> kActionTable = {
+      %% Action Table %%
+      };
+
+      template <size_t N>
+        void ReduceActionN<N>::reduce(stack<StackItem>& s) {
+          #if PARSER_IS_VERBOSE
+            cout << "  Should pop " << N << " items from the stack." << endl;
+            cout << "    Before: " << s.size() << endl;
+          #endif
+          /* Invoke the callback on the proper arguments, getting the AuxData
+           * to push onto the stack.
+           */
+          auto nextItem = DoReduction<N>::invoke(s, callback);
+          #if PARSER_IS_VERBOSE
+            cout << "    After: " << s.size() << endl;
+          #endif
+
+          int state = s.top().state;
+          #if PARSER_IS_VERBOSE
+            cout << "  Top state is " << state << endl;
+          #endif
+
+          /* Look up the shift destination for this nonterminal. */
+          auto* action = static_cast<ShiftAction*>(kActionTable[state].at(reduceTo));
+          #if PARSER_IS_VERBOSE
+            cout << "  Should shift to state " << action->target << endl;
+          #endif
+
+          /* Push this onto the stack. */
+          s.push({ action->target, { { }, nextItem } });
+      }
+
+      /* Internal parsing routine */
+      AuxData parseInternal(queue<Token>& tokens) {
+        stack<StackItem> s;
+
+        /* Seed the stack with the initial state. */
+        s.push({ 0, {} });
+
+        /* Run the parser! */
+        while (!tokens.empty()) {
+          /* Look at the next token. We only consume it in a shift. */
+          auto curr  = tokens.front();
+          int  state = s.top().state;
+
+          #if PARSER_IS_VERBOSE
+            cout << "Current state: " << state << endl;
+            cout << "  Symbol: " << curr.data << endl;
+            cout << endl;
+          #endif
+
+          /* Look up the action to take; if there is no action, it's an error. */
+          if (!kActionTable[state].count(curr.type)) {
+            if (curr.type == TokenType::SCAN_EOF) {
+              throw runtime_error("End of formula encountered unexpectedly. (Are you missing a close parenthesis?)");
+            }
+            throw runtime_error("Found \"" + to_string(curr) + "\" where it wasn't expected.");
+          }
+
+          /* See what action to take. */
+          auto action = kActionTable[state].at(curr.type);
+          if (auto* shift = dynamic_cast<ShiftAction*>(action)) {
+            #if PARSER_IS_VERBOSE
+              cout << "  Action: Shift to " << shift->target << endl;
+            #endif
+            s.push( { shift->target, {curr, {}} } ); // No special data.
+            tokens.pop();
+          } else if (auto* reduce = dynamic_cast<ReduceAction*>(action)) {
+            #if PARSER_IS_VERBOSE
+              cout << "  Action: Reduce" << endl;
+            #endif
+            reduce->reduce(s);
+          } else if (dynamic_cast<HaltAction*>(action)) {
+            #if PARSER_IS_VERBOSE
+              cout << "  Action: Halt" << endl;
+            #endif
+            return s.top().data.data;
+          } else {
+            throw runtime_error("Unknown action.");
+          }
+        }
+
+        throw runtime_error("Out of tokens, but parser hasn't finished.");
+      }
+
+    %% Reduce Functions %%
+    }
+
+    /* Public parsing routine. */
+    %% Parser Return %% parse(queue<Token>& q) {
+      return parseInternal(q).%% Return Field %%;
+    }
+    %% Parser Return %% parse(queue<Token>&& q) {
+      return parseInternal(q).%% Return Field %%;
+    }
+}

@@ -1,0 +1,69 @@
+{
+    "grammar": {
+        "FORMULA": [
+            { "production": ["FORALL", "IDENTIFIER", "OPTDOT", "FORMULA"], "code": "$$ = make_shared<FOL::UniversalNode>  ($2, $4);" },
+            { "production": ["EXISTS", "IDENTIFIER", "OPTDOT", "FORMULA"], "code": "$$ = make_shared<FOL::ExistentialNode>($2, $4);" },
+
+            { "production": ["NOT", "FORMULA"], "code": "$$ = make_shared<FOL::NotNode>($2);" },
+
+            { "production": ["TRUE"], "code": "$$ = make_shared<FOL::TrueNode>();" },
+            { "production": ["FALSE"], "code": "$$ = make_shared<FOL::FalseNode>();" },
+
+            { "production": ["LPAREN", "FORMULA", "RPAREN"], "code": "$$ = $2;" },
+
+            { "production": ["FORMULA", "AND",     "FORMULA"], "code": "$$ = make_shared<FOL::AndNode>($1, $3);" },
+            { "production": ["FORMULA", "OR",      "FORMULA"], "code": "$$ = make_shared<FOL::OrNode>($1, $3);"  },
+            { "production": ["FORMULA", "IMPLIES", "FORMULA"], "code": "$$ = make_shared<FOL::ImpliesNode>($1, $3);" },
+            { "production": ["FORMULA", "IFF",     "FORMULA"], "code": "$$ = make_shared<FOL::IffNode>($1, $3);" },
+
+            { "production": ["OBJECT", "EQUALS",    "OBJECT"], "code": "$$ = make_shared<FOL::EqualsNode>($1, $3);" },
+            { "production": ["OBJECT", "NOTEQUALS", "OBJECT"], "code": "$$ = make_shared<FOL::NotEqualsNode>($1, $3);" },
+            { "production": ["OBJECT"], "code": "$$ = $1;" }
+        ],
+        "CALL": [
+            { "production": ["IDENTIFIER", "LPAREN", "ARGS", "RPAREN"], "code": "$$ = make_shared<FOL::InvokeNode>($1, $3);" }
+        ],
+        "OPTDOT": [
+            { "production": [],      "code": ""},
+            { "production": ["DOT"], "code": ""}
+        ],
+        "ARGS": [
+            { "production": [],          "code": "$$ = {};"},
+            { "production": ["ARGLIST"], "code": "$$ = $1;"}
+        ],
+        "ARGLIST": [
+            { "production": ["OBJECT"],                     "code": "$$ = {$1};"},
+            { "production": ["OBJECT", "COMMA", "ARGLIST"], "code": "$3.insert($3.begin(), $1); $$ = $3;"}
+        ],
+        "OBJECT": [
+            { "production": ["IDENTIFIER"], "code": "$$ = make_shared<FOL::VariableNode>($1);"},
+            { "production": ["CALL"],       "code": "$$ = $1;"}
+        ]
+    },
+
+
+    "start-symbol": "FORMULA",
+
+
+    "priorities": [
+        "FORALL", "EXISTS", "EQUALS", "NOTEQUALS", "NOT", "AND", "OR", "IMPLIES", "IFF"
+    ],
+
+    "nonterminal-types": {
+        "FORMULA":   "std::shared_ptr<FOL::ASTNode>",
+        "CALL":      "std::shared_ptr<FOL::ASTNode>",
+        "ARGS":      "std::vector<std::shared_ptr<FOL::ASTNode>>",
+        "ARGLIST":   "std::vector<std::shared_ptr<FOL::ASTNode>>",
+        "OBJECT":    "std::shared_ptr<FOL::ASTNode>"
+    },
+
+    "header-extras": [
+        "#include <memory>",
+        "#include \"FOLAST.h\""
+    ],
+
+    "verbose": false,
+
+    "parser-name": "FOL"
+
+}

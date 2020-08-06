@@ -1,0 +1,37 @@
+{
+    "grammar": {
+        "FORMULA": [
+            { "production": ["NOT", "FORMULA"], "code": "$$ = make_shared<PL::NotExpression>($2);" },
+            { "production": ["TRUE"], "code": "$$ = make_shared<PL::TrueExpression>();" },
+            { "production": ["FALSE"], "code": "$$ = make_shared<PL::FalseExpression>();" },
+            { "production": ["LPAREN", "FORMULA", "RPAREN"],   "code": "$$ = $2;" },
+            { "production": ["FORMULA", "AND",     "FORMULA"], "code": "$$ = make_shared<PL::AndExpression>($1, $3);" },
+            { "production": ["FORMULA", "OR",      "FORMULA"], "code": "$$ = make_shared<PL::OrExpression>($1, $3);"  },
+            { "production": ["FORMULA", "IMPLIES", "FORMULA"], "code": "$$ = make_shared<PL::ImpliesExpression>($1, $3);" },
+            { "production": ["FORMULA", "IFF",     "FORMULA"], "code": "$$ = make_shared<PL::IffExpression>($1, $3);" },
+            { "production": ["IDENTIFIER"],                    "code": "$$ = make_shared<PL::VariableExpression>($1);" }
+        ]
+    },
+
+
+    "start-symbol": "FORMULA",
+
+
+    "priorities": [
+        "NOT", "AND", "OR", "IMPLIES", "IFF"
+    ],
+
+    "nonterminal-types": {
+        "FORMULA":   "std::shared_ptr<PL::Expression>"
+    },
+
+    "header-extras": [
+        "#include <memory>",
+        "#include \"PLExpression.h\""
+    ],
+
+    "verbose": false,
+
+    "parser-name": "PL"
+
+}

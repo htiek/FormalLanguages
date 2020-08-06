@@ -1,0 +1,3 @@
+S -> S u S | n | o | {L}
+L   -> | T
+T   -> S | S, T

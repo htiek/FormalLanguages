@@ -1,0 +1,9 @@
+[submodule "Formal Languages/src/FormalLanguages"]
+	path = Formal Languages/src/FormalLanguages
+	url = https://github.com/htiek/FormalLanguages
+[submodule "Parser Generator/src/Utilities"]
+	path = Parser Generator/src/Utilities
+	url = https://github.com/htiek/MiniData
+[submodule "Formal Languages/src/FileParser"]
+	path = Formal Languages/src/FileParser
+	url = https://github.com/htiek/FileParser
