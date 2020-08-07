@@ -397,6 +397,14 @@ namespace CFG {
             if (kParserVerbose) cout << endl;
         }
 
+        /* For debugging. */
+        void printItems(const EarleyState& state, size_t index) {
+            cout << "Items at index " << index << ": " << endl;
+            for (const auto& item: state.items.at(index)) {
+                cout << "  " << item << endl;
+            }
+        }
+
         /* Earley parsing algorithm. We run in a loop of scan/complete/predict, starting
          * at predict, and see if we find the proper Earley item in the last column.
          *
@@ -422,12 +430,15 @@ namespace CFG {
 
             /* Do a prediction step. */
             predict(state, 0);
+            if (kParserVerbose) printItems(state, 0);
 
             /* Run the Earley parser. */
             for (size_t i = 0; i < input.size(); i++) {
                 scan(state, i, input[i]);
-                complete(state, i+1);
                 predict(state, i+1);
+                complete(state, i+1);
+
+                if (kParserVerbose) printItems(state, i+1);
             }
             if (kParserVerbose) cout << endl;
 
@@ -687,6 +698,7 @@ namespace CFG {
 
             /* Try all possible derivations from the end and see if any of them work. */
             for (const auto& item: state.items.back()) {
+                if (kDeriverVerbose) cout << "Inspecting item " << item << endl;
                 if (dotAtEnd(item) && item.itemPos == 0 && item.production->nonterminal == start) {
                     /* See if we can find a derivation here. */
                     auto derivation = derivationOfRec(state, item, input.size(), { item.production->nonterminal });
