@@ -385,24 +385,6 @@ namespace CFG {
                         else if (kParserVerbose) cout << "        No" << endl;
                     }
                 }
-#if 0
-                /* If this dotted item is nullable, skip past it. This idea comes from
-                 * "Practical Earley Parsing" by Aycock and Horspool.
-                 */
-                if (afterDot(item).type == Symbol::Type::NONTERMINAL && state.nullable.count(afterDot(item).ch)) {
-                    if (kParserVerbose) cout << "    Symbol is nullable." << endl;
-                    auto next = advanceDot(item);
-                    if (kParserVerbose) cout << "      Adding item " << next << endl;
-                    if (addItem(state, index, next)) {
-                        if (kParserVerbose) cout << "      Item is new. Needs to be processed?" << endl;
-                        /* New fella; check if it should be added. */
-                        if (!dotAtEnd(next) && afterDot(next).type == Symbol::Type::NONTERMINAL) {
-                            if (kParserVerbose) cout << "        Yes!" << endl;
-                            worklist.push(next);
-                        } else if (kParserVerbose) cout << "        No!" << endl;
-                    }
-                }
-#endif
             }
             if (kParserVerbose) cout << endl;
 
