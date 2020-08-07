@@ -281,8 +281,11 @@ namespace CFG {
             if (kParserVerbose) cout << endl;
         }
 
-        /* "Complete" step of the Earley algorithm. */
-        void complete(EarleyState& state, size_t index) {
+        /* "Complete" step of the Earley algorithm. Returns whether anything
+         * changed in the course of running this process.
+         */
+        bool complete(EarleyState& state, size_t index) {
+            bool result = false;
             if (kParserVerbose) cout << "COMPLETE " << index << endl;
 
             /* Create a worklist of items to process. */
@@ -318,6 +321,7 @@ namespace CFG {
                          * process it too.
                          */
                         if (addItem(state, index, next)) {
+                            result = true;
                             if (kParserVerbose) cout << "      This is new - do we need to process?" << endl;
                             if (dotAtEnd(next)) {
                                 if (kParserVerbose) cout << "        Yes!" << endl;
@@ -330,11 +334,14 @@ namespace CFG {
             }
 
             if (kParserVerbose) cout << endl;
+            return result;
         }
 
         /* "Predict" step of Earley parser. */
-        void predict(EarleyState& state, size_t index) {
+        bool predict(EarleyState& state, size_t index) {
+            bool result = false;
             if (kParserVerbose) cout << "PREDICT " << index << endl;
+
             /* Worklist; we may discover many things. */
             queue<EarleyItem> worklist;
 
@@ -367,6 +374,8 @@ namespace CFG {
                     EarleyItem predicted = { prod, 0, index };
                     if (kParserVerbose) cout << "      Produced " << predicted << endl;
                     if (addItem(state, index, predicted)) {
+                        result = true;
+
                         if (kParserVerbose) cout << "      This is new. Process it?" << endl;
                         /* Nonterminal at the front? Add it in. */
                         if (!dotAtEnd(predicted) && afterDot(predicted).type == Symbol::Type::NONTERMINAL) {
@@ -376,7 +385,7 @@ namespace CFG {
                         else if (kParserVerbose) cout << "        No" << endl;
                     }
                 }
-
+#if 0
                 /* If this dotted item is nullable, skip past it. This idea comes from
                  * "Practical Earley Parsing" by Aycock and Horspool.
                  */
@@ -393,8 +402,21 @@ namespace CFG {
                         } else if (kParserVerbose) cout << "        No!" << endl;
                     }
                 }
+#endif
             }
             if (kParserVerbose) cout << endl;
+
+            return result;
+        }
+
+        void completeAndPredict(EarleyState& state, size_t index) {
+            /* Run predictor and completer until convergence. */
+            bool completeUpdate;
+            bool predictUpdate;
+            do {
+                completeUpdate = complete(state, index);
+                predictUpdate  = predict(state, index);
+            } while (completeUpdate || predictUpdate);
         }
 
         /* For debugging. */
@@ -428,17 +450,11 @@ namespace CFG {
                 addItem(state, 0, { prod, 0, 0 });
             }
 
-            /* Do a prediction step. */
-            predict(state, 0);
-            if (kParserVerbose) printItems(state, 0);
-
             /* Run the Earley parser. */
-            for (size_t i = 0; i < input.size(); i++) {
-                scan(state, i, input[i]);
-                predict(state, i+1);
-                complete(state, i+1);
-
-                if (kParserVerbose) printItems(state, i+1);
+            for (size_t i = 0; i <= input.size(); i++) {
+                if (kParserVerbose) printItems(state, i);
+                completeAndPredict(state, i);
+                if (i != input.size()) scan(state, i, input[i]);
             }
             if (kParserVerbose) cout << endl;
 
