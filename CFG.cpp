@@ -415,6 +415,11 @@ namespace CFG {
          * We use a slightly different indexing system than the traditional Earley position.
          * Position 0 is just before the first character, and position i+1 is just after the
          * ith character.
+         *
+         * TODO: This can be cleaned up / optimized as follows. Iterate over the item sets
+         * as usual, but use the sets themselves as the worklist! Use the idea from "Practical
+         * Earley Parsing" of running predict (shifting dots over nullables), then complete,
+         * then scan. This avoids the tight loop of complete/predict.
          */
         EarleyState earley(char32_t start,
                            const Nulls& nullable,
@@ -2274,7 +2279,11 @@ namespace CFG {
                 if (kParserVerbose) cout << "Before: " << endl;
                 if (kParserVerbose) printItems(items, i);
 
-                /* Create a worklist of what we need to process in this column. */
+                /* Create a worklist of what we need to process in this column.
+                 *
+                 * TODO: This could conceivably be done by just iterating over the items in
+                 * the current column. In fact, that would probably be faster!
+                 */
                 queue<EDFAEarleyItem> worklist;
                 for (const auto& item: items[i]) {
                     worklist.push(item);
