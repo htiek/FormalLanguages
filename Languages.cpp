@@ -19,4 +19,12 @@ namespace Languages {
         }
         return result;
     }
+
+    string toString(const Alphabet& alphabet) {
+        string result;
+        for (char32_t ch: alphabet) {
+            result += toUTF8(ch);
+        }
+        return result;
+    }
 }

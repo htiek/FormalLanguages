@@ -9,4 +9,5 @@ namespace Languages {
 
     bool isSubsetOf(const Alphabet& lhs, const Alphabet& rhs);
     Alphabet toAlphabet(const std::string& alphaChars);
+    std::string toString(const Alphabet& alphabet);
 }
