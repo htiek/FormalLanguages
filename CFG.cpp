@@ -2230,9 +2230,9 @@ namespace CFG {
         bool insert(vector<vector<EDFAEarleyItem>>& items,
                     Bitmap3D& bitmap,
                     size_t index, const EDFAEarleyItem& item) {
-            size_t pos = index * bitmap.widthMultiplier + item.state->index * bitmap.depthMultiplier + item.itemPos;
-            size_t arrSlot = pos >> 6;                  // Pos / 64
-            size_t bit     = uint64_t(1) << (pos & 63); // Pos % 64
+            size_t   pos     = index * bitmap.widthMultiplier + item.state->index * bitmap.depthMultiplier + item.itemPos;
+            size_t   arrSlot = pos >> 6;                  // Pos / 64
+            uint64_t bit     = uint64_t(1) << (pos & 63); // Pos % 64
 
             if (kParserVerbose) cout << "Attempting to add this item to slot " << index << ":" << endl;
             if (kParserVerbose) cout << item << endl;
