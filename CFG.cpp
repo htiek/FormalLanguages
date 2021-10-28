@@ -258,7 +258,7 @@ namespace CFG {
 
         /* Adds an item to an Earley parser. */
         bool addItem(EarleyState& state, size_t index, const EarleyItem& item) {
-            if (index < 0 || index > state.items.size() || item.itemPos > index) abort(); // Logic error!
+            if (index > state.items.size() || item.itemPos > index) abort(); // Logic error!
             return state.items[index].insert(item).second;
         }
 
