@@ -69,8 +69,9 @@ namespace CFG {
              *
              * 1. We have read something that matched at some point. In that case, use
              *    maximal munch to figure out what that something is, then return it.
-             * 2. Nothing matched. That's okay! Treat each character as a terminal or
-             *    nonterminal, respectively.
+             * 2. Nothing matched. That's okay! Because in CFG land we don't have multiletter
+             *    expressions, we just want the first character that we read. Put the rest
+             *    back into the stream and figure out what those tokens mean later.
              */
             if (match) {
                 while (!kTokens.count(token)) {
@@ -79,9 +80,15 @@ namespace CFG {
                 }
                 result.push_back({ kTokens.at(token), static_cast<char32_t>(kTokens.at(token)) });
             } else {
-                for (char32_t ch: utf8Reader(token)) {
-                    result.push_back({ isNonterminal(ch)? TokenType::NONTERMINAL : TokenType::TERMINAL, ch });
+                /* Rewind all the way. */
+                while (!token.empty()) {
+                    if (!input.unget()) throw runtime_error("Can't rewind stream.");
+                    token.pop_back();
                 }
+
+                /* Just read one character. */
+                char32_t ch = readChar(input);
+                result.push_back({ isNonterminal(ch)? TokenType::NONTERMINAL : TokenType::TERMINAL, ch });
             }
         }
     }
@@ -115,3 +122,4 @@ namespace CFG {
         return toUTF8(t.data);
     }
 }
+
